@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Трекер тренировок</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --primary: #4ade80;
+      --rest: #38bdf8;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: 40px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    input {
+      background: #2a2a2a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px;
+      font-size: 16px;
+      outline: none;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+    }
+
+    .timer-display {
+      position: relative;
+      text-align: center;
+      padding: 28px 10px;
+      border-radius: 12px;
+      background: #181818;
+      border: 1px solid var(--border);
+    }
+
+    .timer-status {
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .timer-time {
+      font-size: 64px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .state-idle .timer-status { color: var(--text-muted); }
+    .state-work .timer-status { color: var(--primary); }
+    .state-work .timer-time { color: var(--primary); }
+    .state-rest .timer-status { color: var(--rest); }
+    .state-rest .timer-time { color: var(--rest); }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s, transform 0.05s, background-color 0.2s;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background: #2a2a2a !important;
+      color: #666 !important;
+      cursor: not-allowed;
+      border: 1px solid #333;
+    }
+
+    .btn-primary { background: var(--primary); color: #000; width: 100%; }
+    .btn-rest { background: var(--rest); color: #000; width: 100%; }
+    .btn-secondary { background: #374151; color: var(--text); }
+
+    .btn-finish {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: transparent;
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 20px;
+      display: block;
+      line-height: 1;
+    }
+    .btn-finish:active {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #262626;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .log-meta {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-small {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="card">
+      <div class="col" style="margin-bottom: 12px;">
+        <label>Упражнение</label>
+        <input type="text" id="exerciseName" value="Жим лежа" placeholder="Название..." list="exercisesList">
+        <datalist id="exercisesList"></datalist>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>Вес (кг)</label>
+          <input type="number" id="weightInput" value="80" step="0.5">
+        </div>
+        <div class="col">
+          <label>Повторы</label>
+          <input type="number" id="repsInput" value="8" step="1">
+        </div>
+        <div class="col">
+          <label>Отдых (сек)</label>
+          <input type="number" id="targetRestInput" value="90" step="5">
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-display state-idle" id="timerBox">
+      <div class="timer-status" id="timerStatus">Готов к работе</div>
+      <div class="timer-time" id="timerDigits">00:00</div>
+
+      <button id="btnFinish" class="btn-finish" title="Завершить тренировку">🏁</button>
+    </div>
+
+    <div>
+      <button id="btnMain" class="btn-primary">Начать подход</button>
+    </div>
+
+    <div class="card">
+      <div class="actions-row">
+        <label>История подходов</label>
+        <div class="btn-group">
+          <button id="btnExport" class="btn-secondary btn-small">Экспорт CSV</button>
+          <button id="btnClear" class="btn-secondary btn-small" style="background: #4b2525;">Очистить</button>
+        </div>
+      </div>
+      <div class="log-list" id="logList"></div>
+    </div>
+  </div>
+
+  <script>
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playRestAlert() {
+      initAudio();
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+      [0, 0.2, 0.4].forEach((delay) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now + delay);
+        gain.gain.setValueAtTime(0.3, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.12);
+      });
+    }
+
+    let state = 'idle';
+    let timerInterval = null;
+    let workSeconds = 0;
+    let restSeconds = 0;
+    let lockSeconds = 0;
+    let targetRestTime = 90;
+    let setsHistory = JSON.parse(localStorage.getItem('workout_sets_v2') || '[]');
+
+    const timerBox = document.getElementById('timerBox');
+    const timerStatus = document.getElementById('timerStatus');
+    const timerDigits = document.getElementById('timerDigits');
+    const btnMain = document.getElementById('btnMain');
+    const btnFinish = document.getElementById('btnFinish');
+    const btnExport = document.getElementById('btnExport');
+    const btnClear = document.getElementById('btnClear');
+    const logList = document.getElementById('logList');
+    const exerciseName = document.getElementById('exerciseName');
+    const exercisesList = document.getElementById('exercisesList');
+    const weightInput = document.getElementById('weightInput');
+    const repsInput = document.getElementById('repsInput');
+    const targetRestInput = document.getElementById('targetRestInput');
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateExerciseAutocomplete() {
+      const uniqueExercises = [...new Set(setsHistory.map(s => s.exercise))].filter(Boolean);
+      exercisesList.innerHTML = uniqueExercises
+        .map(ex => `<option value="${ex}">`)
+        .join('');
+    }
+
+    function renderLogs() {
+      logList.innerHTML = '';
+      updateExerciseAutocomplete();
+      setsHistory.slice().reverse().forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'log-item';
+
+        let displayTime = '';
+        if (item.timestamp) {
+          const d = new Date(item.timestamp);
+          const dateStr = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+          const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          displayTime = `${dateStr} ${timeStr}`;
+        }
+
+        div.innerHTML = `
+          <div>
+            <strong>${item.exercise}</strong>
+            <div class="log-meta">${item.weight} кг × ${item.reps} повт. @ ${displayTime}</div>
+          </div>
+          <div style="text-align: right;">
+            <div>Сет: ${item.workTime}с</div>
+            <div class="log-meta">Отдых: ${item.restTime ? item.restTime + 'с' : '...'}</div>
+          </div>
+        `;
+        logList.appendChild(div);
+      });
+    }
+
+    function saveState() {
+      localStorage.setItem('workout_sets_v2', JSON.stringify(setsHistory));
+    }
+
+    function resetToIdle() {
+      state = 'idle';
+      clearInterval(timerInterval);
+      timerBox.className = 'timer-display state-idle';
+      timerStatus.textContent = 'Готов к работе';
+      timerDigits.textContent = '00:00';
+      btnMain.textContent = 'Начать подход';
+      btnMain.className = 'btn-primary';
+      btnMain.disabled = false;
+      workSeconds = 0;
+      restSeconds = 0;
+    }
+
+    function startWork() {
+      if (!exerciseName.value.trim()) {
+        alert('Пожалуйста, введите название упражнения');
+        return;
+      }
+      initAudio();
+      if (state === 'rest' && setsHistory.length > 0) {
+        setsHistory[setsHistory.length - 1].restTime = restSeconds;
+      saveState();
+      renderLogs();
+      }
+
+      state = 'work';
+      workSeconds = 0;
+      timerBox.className = 'timer-display state-work';
+      timerStatus.textContent = 'Подход идет';
+      timerDigits.textContent = formatTime(0);
+      btnMain.textContent = 'Закончить подход';
+      btnMain.className = 'btn-rest';
+      btnMain.disabled = false;
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        workSeconds++;
+        timerDigits.textContent = formatTime(workSeconds);
+      }, 1000);
+    }
+
+    function startRest() {
+      initAudio();
+      const currentSet = {
+        exercise: exerciseName.value.trim() || 'Без названия',
+        weight: parseFloat(weightInput.value) || 0,
+        reps: parseInt(repsInput.value, 10) || 0,
+        workTime: workSeconds,
+        restTime: null,
+        timestamp: new Date().toISOString()
+      };
+      setsHistory.push(currentSet);
+      saveState();
+      renderLogs();
+
+      state = 'rest';
+      restSeconds = 0;
+      lockSeconds = 30;
+      targetRestTime = parseInt(targetRestInput.value, 10) || 90;
+
+      timerBox.className = 'timer-display state-rest';
+      timerStatus.textContent = 'Отдых';
+      timerDigits.textContent = formatTime(0);
+
+      btnMain.disabled = true;
+      btnMain.textContent = 'Следующий подход';
+      btnMain.className = 'btn-primary';
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        restSeconds++;
+        timerDigits.textContent = formatTime(restSeconds);
+
+        if (lockSeconds > 0) {
+          lockSeconds--;
+          if (lockSeconds <= 0) {
+            btnMain.disabled = false;
+          }
+        }
+
+        if (restSeconds === targetRestTime) {
+          playRestAlert();
+        }
+
+        if (restSeconds >= 1800) {
+          resetToIdle();
+        }
+      }, 1000);
+    }
+
+    btnMain.addEventListener('click', () => {
+      if (btnMain.disabled) return;
+      if (state === 'idle' || state === 'rest') {
+        startWork();
+      } else if (state === 'work') {
+        startRest();
+      }
+    });
+
+    btnFinish.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('Завершить тренировку?')) {
+        if (state === 'rest' && setsHistory.length > 0) {
+          setsHistory[setsHistory.length - 1].restTime = restSeconds;
+          saveState();
+          renderLogs();
+        }
+        resetToIdle();
+      }
+    });
+
+    btnClear.addEventListener('click', () => {
+      if (confirm('Вы уверены, что хотите полностью очистить историю подходов?')) {
+        setsHistory = [];
+        saveState();
+        renderLogs();
+      }
+    });
+
+    btnExport.addEventListener('click', () => {
+      if (setsHistory.length === 0) return;
+      const headers = ['Упражнение', 'Вес (кг)', 'Повторы', 'Время подхода (сек)', 'Отдых (сек)', 'Дата и время'];
+      const rows = setsHistory.map(s => {
+        const d = new Date(s.timestamp);
+        const dateStr = d.getFullYear() + '-' +
+                        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(d.getDate()).padStart(2, '0') + ' ' +
+                        String(d.getHours()).padStart(2, '0') + ':' +
+                        String(d.getMinutes()).padStart(2, '0') + ':' +
+                        String(d.getSeconds()).padStart(2, '0');
+        return [
+          `"${s.exercise}"`,
+          s.weight,
+          s.reps,
+          s.workTime,
+          s.restTime || '',
+          dateStr
+        ];
+      });
+      const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `workout_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    renderLogs();
+  </script>
+</body>
+</html>
